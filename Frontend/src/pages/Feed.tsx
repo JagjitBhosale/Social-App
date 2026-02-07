@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import CreatePost from '../components/CreatePost';
-import PostPreviewDialog, { PostForPreview } from '../components/PostPreviewDialog';
+import PostPreviewDialog from '../components/PostPreviewDialog';
 import axios from 'axios';
 
 interface Post {
