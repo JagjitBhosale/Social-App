@@ -112,9 +112,20 @@ interface User {
   bio?: string;
 }
 
+function getStoredUser(): User | null {
+  try {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (!token || !storedUser) return null;
+    return JSON.parse(storedUser) as User;
+  } catch {
+    return null;
+  }
+}
+
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!getStoredUser());
+  const [currentUser, setCurrentUser] = useState<User | null>(() => getStoredUser());
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
@@ -144,34 +155,21 @@ function App() {
   };
 
   React.useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    const storedAuth = localStorage.getItem('isAuthenticated');
-
-    if (token && storedUser && storedAuth === 'true') {
-      try {
-        const user = JSON.parse(storedUser);
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-      } catch {
-        localStorage.removeItem('user');
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('token');
-      }
-    }
-
     const verifySession = async () => {
       const t = localStorage.getItem('token');
       if (!t) return;
       try {
-        const res = await axios.get('/auth/me');
+        const res = await axios.get('/auth/me', { _skipAuthRedirect: true } as any);
         if (res.data?.success && res.data?.user) {
           setCurrentUser(res.data.user);
+          setIsAuthenticated(true);
           localStorage.setItem('user', JSON.stringify(res.data.user));
+          localStorage.setItem('isAuthenticated', 'true');
           if (res.data.token) localStorage.setItem('token', res.data.token);
         }
       } catch (err) {
-        if (err && (err as any).response?.status === 401) {
+        const status = (err as any)?.response?.status;
+        if (status === 401) {
           setCurrentUser(null);
           setIsAuthenticated(false);
           localStorage.removeItem('user');

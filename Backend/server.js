@@ -118,11 +118,22 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT, 10) || 5000;
+
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API: http://localhost:${PORT}/api`);
   const cloudOk = (process.env.CLOUDINARY_URL && !process.env.CLOUDINARY_URL.includes('<'))
     || (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name' && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
   console.log(`Cloudinary: ${cloudOk ? 'enabled' : 'disabled (using local storage)'}`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\nPort ${PORT} is already in use. Either:`);
+    console.error(`  1. Stop the other process using port ${PORT}`);
+    console.error(`  2. Or set PORT=5001 (or another port) in .env and restart\n`);
+    process.exit(1);
+  }
+  throw err;
 });
